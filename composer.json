@@ -1,0 +1,21 @@
+{
+    "name": "cesar/app-salon",
+    "description": "Proyecto php 8, MVC, SQL, SASS, Gulp",
+    "autoload": {
+        "psr-4": {
+            "Model\\" : "./models",
+            "MVC\\" : "./",
+            "Controllers\\" : "./controllers",
+            "Classes\\" : "./classes"
+        }
+    },
+    "authors": [
+        {
+            "name": "cesar"
+        }
+    ],
+    "require": {
+        "phpmailer/phpmailer": "^6.9",
+        "vlucas/phpdotenv": "^5.6"
+    }
+}
