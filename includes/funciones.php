@@ -13,25 +13,3 @@ function s($html) : string {
     return $s;
 }
 
-//Funcion logeueado
-
-function isAuth(): void{
-    if(!isset($_SESSION['login'])){
-        header('Location: /');
-    }
-}
-
-//funtcio es admin
-function isAdmin():void{
-    if(!isset($_SESSION['admin'])){
-        header('Location:/');
-    }
-}
-
-
-function esUltimo($actual, $proximo): bool{
-    if($actual !== $proximo){
-        return true;
-    }
-    return false;
-}

@@ -6,6 +6,8 @@ class Router
 {
     public array $getRoutes = [];
     public array $postRoutes = [];
+    public array $putRoutes = [];
+    public array $deletetRoutes = [];
 
     public function get($url, $fn)
     {
@@ -17,24 +19,43 @@ class Router
         $this->postRoutes[$url] = $fn;
     }
 
+    public function put($url, $fn)
+    {
+        $this->putRoutes[$url] = $fn;
+    }
+
+    public function delete($url, $fn)
+    {
+        $this->deletetRoutes[$url] = $fn;
+    }
+    
+
     public function comprobarRutas()
     {
         
-        // Proteger Rutas...
         session_start();
 
-        // Arreglo de rutas protegidas...
-        // $rutas_protegidas = ['/admin', '/propiedades/crear', '/propiedades/actualizar', '/propiedades/eliminar', '/vendedores/crear', '/vendedores/actualizar', '/vendedores/eliminar'];
-
-        // $auth = $_SESSION['login'] ?? null;
 
         $currentUrl = strtok($_SERVER['REQUEST_URI'], '?') ?? '/';
         $method = $_SERVER['REQUEST_METHOD'];
 
-        if ($method === 'GET') {
-            $fn = $this->getRoutes[$currentUrl] ?? null;
-        } else {
-            $fn = $this->postRoutes[$currentUrl] ?? null;
+        
+        switch($method){
+            case 'GET':
+                $fn = $this->getRoutes[$currentUrl] ?? null;
+                break;
+            case 'POST':
+                $fn = $this->postRoutes[$currentUrl] ?? null;
+                break;
+            case 'POST':
+                $fn = $this->putRoutes[$currentUrl] ?? null;
+                break;
+            case 'DELETE':
+                $fn = $this->deletetRoutes[$currentUrl] ?? null;
+                break;
+            default:
+                echo "metodo no permitido";
+                break;
         }
 
 
@@ -46,19 +67,4 @@ class Router
         }
     }
 
-    public function render($view, $datos = [])
-    {
-
-        // Leer lo que le pasamos  a la vista
-        foreach ($datos as $key => $value) {
-            $$key = $value;  // Doble signo de dolar significa: variable variable, básicamente nuestra variable sigue siendo la original, pero al asignarla a otra no la reescribe, mantiene su valor, de esta forma el nombre de la variable se asigna dinamicamente
-        }
-
-        ob_start(); // Almacenamiento en memoria durante un momento...
-
-        // entonces incluimos la vista en el layout
-        include_once __DIR__ . "/views/$view.php";
-        $contenido = ob_get_clean(); // Limpia el Buffer
-        include_once __DIR__ . '/views/layout.php';
-    }
 }
