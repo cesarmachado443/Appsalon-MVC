@@ -15,7 +15,7 @@ class UsuariosInformacion extends ActiveRecord{
 
     public function __construct($args = [])
     {
-        $this->id = $args['id'] ?? null;
+        $this->id = isset($args['id']) ? intval($args['id']) : null;
         $this->descripcion_personal = $args['descripcion_personal'] ?? '';
         $this->expectativas = $args['expectativas'] ?? '';
         $this->avatar = $args['avatar'] ?? '';

@@ -7,14 +7,14 @@ class Hobbies extends ActiveRecord{
     protected static $tabla = "hobbies";
     protected static $columnasDB = ['id','nombre','descripcion'];
 
-    public $id;
+    public int $id;
     public $nombre;
     public $descripcion;
 
 
     public function __construct($args = [])
     {
-        $this->id = $args['id'] ?? null;
+        $this->id = intval($args['id'])?? null;
         $this->nombre = $args['nombre'] ?? '';
         $this->descripcion = $args['descripcion'] ?? '';
 

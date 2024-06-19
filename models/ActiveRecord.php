@@ -34,13 +34,12 @@ class ActiveRecord {
     public static function consultarSQL($query) {
         // Consultar la base de datos
         $resultado = self::$db->query($query);
-
+        
         // Iterar los resultados
         $array = [];
         while($registro = $resultado->fetch_assoc()) {
             $array[] = static::crearObjeto($registro);
         }
-
         // liberar la memoria
         $resultado->free();
 
@@ -119,10 +118,22 @@ class ActiveRecord {
     }
 
     // Busca un registro por su token
-    public static function where($columna ,$valor) {
+    public static function where($columna ,$valor, $columna2 = null, $valor2 = null) {
         $query = "SELECT * FROM " . static::$tabla  ." WHERE ${columna} = '{$valor}' ";
+
+        if (!empty($columna2) && !empty($valor2)) {
+            $query .= " AND ${columna2} = '{$valor2}'";
+        }
+        
+
         $resultado = self::consultarSQL($query);
         return array_shift( $resultado ) ;
+    }
+    // Busqueda Where con Columna trae todas
+    public static function belongsTo($columna, $valor) {
+        $query = "SELECT * FROM " . static::$tabla . " WHERE ${columna} = '${valor}'";
+        $resultado = self::consultarSQL($query);
+        return $resultado;
     }
 
     //CONSULTA PLANA DE SQL(Utilizar cuando los metodos del modelo no son suficientes)

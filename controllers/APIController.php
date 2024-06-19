@@ -5,23 +5,17 @@ use Model\Cita;
 use Model\Hobbies;
 use Model\Mensaje;
 use Model\Usuario;
+use Firebase\JWT\JWT;
+use Model\AdminHobbies;
 use Model\UsuariosHobbies;
 use Model\UsuariosInformacion;
 
 
 class APIController {
 
-    private static function configureCors() {
-        // Permitir solicitudes desde cualquier origen
-        header("Access-Control-Allow-Origin: *");
-        header("Access-Control-Allow-Headers: Content-Type");
-        // Permitir los métodos POST, GET, OPTIONS y encabezados requeridos
-        header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
-        header("Content-Type: application/json");
-    }
+    
 
     public static function auth() {
-            self::configureCors();
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // Obtener el JSON del cuerpo de la solicitud
@@ -47,10 +41,30 @@ class APIController {
                     
                     if($password_correct){
                             //consultar los hobbis del usuario
-                            $hobbies = UsuariosHobbies::mapearHobbiesConUsuarios(intval($usuario->id));
+                            $Usuario_id = $usuario->id;
+                            $queryHobbies = "SELECT h.id, h.nombre, h.descripcion 
+                                                FROM usuarios_hobbies uh 
+                                                INNER JOIN hobbies h ON h.id = uh.hobbie_id 
+                                                WHERE uh.usuario_id = {$Usuario_id}";
+                            $hobbies = UsuariosHobbies::SQL($queryHobbies);
+                            
+                            $hobbiesArray = [];
+                            foreach ($hobbies as $hobby) {
+                                $hobbiesArray[] = array(
+                                    "id" =>intval($hobby->id),
+                                    "nombre" => $hobby->nombre,
+                                    "descripcion" => $hobby->descripcion
+                                );
+                            }
+                            
+                            
                             $usuario_info = UsuariosInformacion::where('usuario_id',intval($usuario->id));
                         
+                            //crear jwt
+                            $token = Usuario::jwt($usuario->id, $usuario->correo);
+                            $jwt = JWT::encode($token,"ghsjldhlajkhfkjadfjkdsf","HS256");
 
+                            
                             // Construir la respuesta con los datos del usuario y sus hobbies
                             $resultado = array(
                                 "localDateTime" => date('Y-m-d\TH:i:s.u'),
@@ -61,14 +75,14 @@ class APIController {
                                         "id" => intval( $usuario->id),
                                         "nombres" => $usuario->nombres,
                                         "apellidos" => $usuario->apellidos,
-                                        "correo" => $usuario->email,
-                                        "hobbies" => $hobbies,
+                                        "correo" => $usuario->correo,
+                                        "hobbies" => $hobbiesArray,
                                         "expectativas"=>$usuario_info->expectativas,
                                         "avatar"=>$usuario_info->avatar,
                                         "descripcion"=>$usuario_info->descripcion_personal 
 
-                                    )
-                                
+                                    ),
+                                "token"=>$jwt
                                 )
                             );
         
@@ -106,123 +120,37 @@ class APIController {
         }
     }
 
-    public static function hobbies() {
 
+    public static function hobbies() {
         
-        self::configureCors();
-        // traer todos los hobbies
-        $hobbies = Hobbies::all();
+
+        if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+            
+            // traer todos los hobbies
+            $hobbies = Hobbies::all();
+        
+            // Construir la respuesta con los datos de los hobbies
+            $resultado = array(
+                "localDateTime" => date('Y-m-d\TH:i:s.u'),
+                "status" => "success",
+                "message" => null,
+                "data" => array(
+                    "hobbie" => $hobbies
+                )
+            );
+        
+            echo json_encode($resultado);
+        
+
+            
+            }
     
-        // Construir la respuesta con los datos de los hobbies
-        $resultado = array(
-            "localDateTime" => date('Y-m-d\TH:i:s.u'),
-            "status" => "success",
-            "message" => null,
-            "data" => array(
-                "hobbie" => $hobbies
-            )
-        );
-    
-        echo json_encode($resultado);
     }
 
     public static function usuarios() {
-        self::configureCors();
-        // traer todos los hobbies
-        $usuarios = usuario::all();
-        foreach ($usuarios as &$usuario) {
-            unset($usuario->password);
-        }
-        // Construir la respuesta con los datos de los hobbies
-        $resultado = array(
-            "localDateTime" => date('Y-m-d\TH:i:s.u'),
-            "status" => "success",
-            "message" => null,
-            "data" => array(
-                "usuario" => $usuarios
-            )
-        );
-    
-        echo json_encode($resultado);
-    }
-    
-    
-    public static function index(){
-        $servicios = Servicio::all();
-
-        echo json_encode($servicios);
-    }
-
-    public static function guardar(){
-        //Almacena la cita y devuelve el ID
-        $cita = new Cita($_POST);
-        $resultado = $cita->guardar();
-        $id = $resultado['id'];
-
-        //Almacena llso servicios con el id de la cita
-        $idServicios = explode(",",$_POST['servicios']);
-        foreach($idServicios as $idservicio){
-            $args = [
-                'citaId'=> $id,
-                'servicioId'=>$idservicio
-            ];
-            $citaServicio = new CitaServicio($args);
-            $citaServicio->guardar();
-        }
         
-       //retornamos una respuesta
-        echo json_encode(['resultado'=> $resultado]);
-    }
-
-    public static function eliminar(){
-        
-        if($_SERVER['REQUEST_METHOD']  === 'POST'){
-            $id = $_POST['id'];
-            $cita = Cita::find($id);
-            $cita->eliminar();
-            header('Location:'.$_SERVER['HTTP_REFERER']);
-        }
-    }
-
-
-    public static function hobbies2() {
-        self::configureCors();
-
-    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-        
-        // traer todos los hobbies
-        $hobbies = Hobbies::all();
-    
-        // Construir la respuesta con los datos de los hobbies
-        $resultado = array(
-            "localDateTime" => date('Y-m-d\TH:i:s.u'),
-            "status" => "success",
-            "message" => null,
-            "data" => array(
-                "hobbie" => $hobbies
-            )
-        );
-    
-        echo json_encode($resultado);
-    
-
-           
-           }
-    
-    }
-
-
-
-
-
-
-
-
-
-    public static function usuarios2() {
-        self::configureCors();
-        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            // traer todos los hobbies
+        if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+            // traer todos los usuarios
             $usuarios = usuario::all();
 
             foreach ($usuarios as &$usuario) {
@@ -253,14 +181,9 @@ class APIController {
         }
     }
 
-
-
-
-
-
-    public static function mensaje2() {
-        self::configureCors();
-        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    public static function mensajes() {
+        
+        if ($_SERVER['REQUEST_METHOD'] === 'GET') {
             // traer todos los hobbies
             $mensaje = Mensaje::all();
             
@@ -277,7 +200,199 @@ class APIController {
             echo json_encode($resultado);
         }
     }
-    
 
+    public static function restarHobie(){
+        
+        if ($_SERVER['REQUEST_METHOD'] === 'PUT') {
+            session_start();
+    
+            // Leer el contenido de la solicitud PUT
+            $input = file_get_contents("php://input");
+            $data = json_decode($input, true);
+    
+            // Verificar si los datos fueron decodificados correctamente
+            if (json_last_error() !== JSON_ERROR_NONE) {
+                $respuesta = [
+                    'tipo' => 'error',
+                    'mensaje' => 'Datos de entrada inválidos'
+                ];
+                echo json_encode($respuesta);
+                return;
+            }
+
+            //eliminamos los hobies 
+            foreach($data['deleteHobbies'] as $hobie){
+                $id = $hobie['id'];
+                $usuario_hobbie = AdminHobbies::find($id);
+                if(!empty($usuario_hobbie)){
+                    $usuario_hobbie->eliminar();
+                }
+            }
+
+            //Guardamos los nuevos
+            $Todos_los_hobies = AdminHobbies::belongsTo('usuario_id',$data['usuarioId']);
+            foreach($data['hobbies'] as $hobie){
+                $nuevo_hobbie_id = intval($hobie['id']);  // Convertir a entero
+                $existe = false;
+
+                    // Verificar si ya existe el hobby en el arreglo $Todos_los_hobies
+                    foreach($Todos_los_hobies as $existingHobbie) {
+                        if (intval($existingHobbie->hobbie_id) === $nuevo_hobbie_id) {
+                            $existe = true;
+                            break;
+                        }
+                    }
+                        if (!$existe) {
+                        $usuario_hobbie = new AdminHobbies;
+                        $usuario_hobbie->hobbie_id = $hobie['id'];
+                        $usuario_hobbie->usuario_id = $data['usuarioId'];
+                        $resultado = $usuario_hobbie->guardar();  
+                        }
+                        
+            }
+            
+            
+            
+
+
+        }
+    }
+    
+    public static function actualizar_usuario(){
+        if ($_SERVER['REQUEST_METHOD'] === 'PUT') {
+            session_start();
+    
+            // Leer el contenido de la solicitud PUT
+            $input = file_get_contents("php://input");
+            $data = json_decode($input, true);
+    
+            // Verificar si los datos fueron decodificados correctamente
+            if (json_last_error() !== JSON_ERROR_NONE) {
+                $respuesta = [
+                    'tipo' => 'error',
+                    'mensaje' => 'Datos de entrada inválidos'
+                ];
+                echo json_encode($respuesta);
+                return;
+            }
+
+             //eliminamos los hobies 
+             foreach($data['deleteHobbies'] as $hobie){
+                $id = $hobie['id'];
+                $usuario_id = $data['id'];
+                $usuario_hobbie = AdminHobbies::where('hobbie_id',$id ,'usuario_id',$usuario_id);
+                if(!empty($usuario_hobbie)){
+                    $usuario_hobbie->eliminar();
+                }
+            }
+
+            //Guardamos los nuevos
+            $Todos_los_hobies = AdminHobbies::belongsTo('usuario_id',$data['id']);
+            foreach($data['hobbies'] as $hobie){
+                $nuevo_hobbie_id = intval($hobie['id']);  // Convertir a entero
+                $existe = false;
+
+                    // Verificar si ya existe el hobby en el arreglo $Todos_los_hobies
+                    foreach($Todos_los_hobies as $existingHobbie) {
+                        if (intval($existingHobbie->hobbie_id) === $nuevo_hobbie_id) {
+                            $existe = true;
+                            break;
+                        }
+                    }
+                        if (!$existe) {
+                        $usuario_hobbie = new AdminHobbies;
+                        $usuario_hobbie->hobbie_id = $hobie['id'];
+                        $usuario_hobbie->usuario_id = $data['id'];
+                        $resultado = $usuario_hobbie->guardar();  
+                        }
+                        
+            }
+
+
+            //Actualizar la info del usuario
+            $usuario_info = UsuariosInformacion::where('usuario_id',$data['id']);
+            $usuario_info->sincronizar($data);
+            if($data['descripcion']){
+            $usuario_info->descripcion_personal = $data['descripcion'];
+            }
+            $resultado = $usuario_info->guardar();
+
+
+
+             if($resultado){
+
+                
+
+                $usuario = Usuario::where('id',$data['id']);
+
+                
+                //consultar los hobbis del usuario
+                            $Usuario_id = intval($usuario->id);
+                            
+                            $queryHobbies = "SELECT h.id, h.nombre, h.descripcion 
+                                                FROM usuarios_hobbies uh 
+                                                INNER JOIN hobbies h ON h.id = uh.hobbie_id 
+                                                WHERE uh.usuario_id = {$Usuario_id}";
+
+                            $hobbies = UsuariosHobbies::SQL($queryHobbies);
+                            
+                            $hobbiesArray = [];
+                            foreach ($hobbies as $hobby) {
+                                $hobbiesArray[] = array(
+                                    "id" =>intval($hobby->id),
+                                    "nombre" => $hobby->nombre,
+                                    "descripcion" => $hobby->descripcion
+                                );
+                                
+                            }
+                            
+                            
+                            $usuario_info = UsuariosInformacion::where('usuario_id',intval($usuario->id));
+                        
+                            //crear jwt
+                            $token = Usuario::jwt($usuario->id, $usuario->correo);
+                            $jwt = JWT::encode($token,"ghsjldhlajkhfkjadfjkdsf","HS256");
+
+                            
+                            // Construir la respuesta con los datos del usuario y sus hobbies
+                            $resultado = array(
+                                "localDateTime" => date('Y-m-d\TH:i:s.u'),
+                                "status" => "success",
+                                "message" => null,
+                                "data" => array(
+                                    "usuario" => array(
+                                        "id" => intval( $usuario->id),
+                                        "nombres" => $usuario->nombres,
+                                        "apellidos" => $usuario->apellidos,
+                                        "correo" => $usuario->correo,
+                                        "hobbies" => $hobbiesArray,
+                                        "expectativas"=>$usuario_info->expectativas,
+                                        "avatar"=>$usuario_info->avatar,
+                                        "descripcion"=>$usuario_info->descripcion_personal 
+
+                                    ),
+                                "token"=>$jwt
+                                )
+                            );
+        
+
+                            // Si deseas responder con el JSON decodificado
+                            echo json_encode($resultado);
+
+
+
+
+
+
+             }
+
+            
+
+
+
+
+
+        }
+    }
 
 }

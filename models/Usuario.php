@@ -7,7 +7,7 @@ class Usuario extends ActiveRecord{
     protected static $columnasDB = ['id', 'nombres', 'apellidos','correo','password'];
 
 
-    public $id;
+    public int $id;
     public $nombres;
     public $apellidos;
     public $correo;
@@ -15,7 +15,7 @@ class Usuario extends ActiveRecord{
     
 
     public function __construct($args = []){
-        $this->id =$args['id'] ?? null;
+        $this->id = intval($args['id']) ?? null;
         $this->nombres =$args['nombres'] ?? '';
         $this->apellidos =$args['apellidos'] ?? '';
         $this->correo =$args['correo'] ?? '';
@@ -41,9 +41,19 @@ class Usuario extends ActiveRecord{
         $this->password = password_hash($this->password, PASSWORD_BCRYPT);
     }
 
-    public function crearToken(){
-        $this->token = uniqid();
+    public static function jwt($id, $email){
+        $time = time();
+
+        $token = array(
+            "iat" => $time,//tiempo en que incia el token
+            "exp"=> $time + (60*60*24),
+            "data"=>[
+                "id"=> intval($id) ,
+                "email"=> $email
+            ]
+            );
         
+        return $token;
     }
     
 

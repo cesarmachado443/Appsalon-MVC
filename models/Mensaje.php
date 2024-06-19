@@ -7,14 +7,14 @@ class Mensaje extends ActiveRecord{
     protected static $columnasDB = ['id', 'titulo', 'descripcion','image'];
 
 
-    public $id;
+    public int $id;
     public $titulo;
     public $descripcion;
     public $image;
     
 
     public function __construct($args = []){
-        $this->id =$args['id'] ?? null;
+        $this->id = intval($args['id']) ?? null;
         $this->titulo =$args['titulo'] ?? '';
         $this->descripcion =$args['descripcion'] ?? '';
         $this->image =$args['image'] ?? '';

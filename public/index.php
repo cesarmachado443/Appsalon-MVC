@@ -8,8 +8,6 @@ use Controllers\APIController;
 
 $router = new Router();
 
-
-
 //ecotic
 
 
@@ -20,11 +18,9 @@ $router->get('/ecotic/api/v1/hobbie',[APIController::class,'hobbies']);
 $router->get('/ecotic/api/v1/usuario',[APIController::class,'usuarios']);
 
 
-$router->post('/ecotic/api/v1/hobbie2',[APIController::class,'hobbies2']);
-$router->post('/ecotic/api/v1/usuario2',[APIController::class,'usuarios2']);
-$router->post('/ecotic/api/v1/mensaje2',[APIController::class,'mensaje2']);
+$router->put('/ecotic/api/v1/usuario',[APIController::class,'actualizar_usuario']);
 
-
+$router->get('/ecotic/api/v1/mensajes',[APIController::class,'mensajes']);
 
 
 // Comprueba y valida las rutas, que existan y les asigna las funciones del Controlador
